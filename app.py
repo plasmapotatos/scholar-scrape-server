@@ -1,3 +1,4 @@
+import smtplib
 from flask import Flask, request, jsonify
 from flask_mail import Mail, Message
 from flask_cors import CORS
@@ -6,18 +7,15 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-app.config['MAIL_SERVER'] = 'smtp.gmail.com' 
-app.config['MAIL_PORT'] = 587  # or 465 for SSL
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = os.environ.get('EMAIL_USER') # Your email username
-app.config['MAIL_PASSWORD'] = os.environ.get('EMAIL_PASS')  # Your email password
-app.config['MAIL_DEFAULT_SENDER'] = ('Timothy Wei', 'timswei@gmail.com')
+SESSMTPUSERNAME = os.environ.get('SMTP_USERNAME')
+SESSMTPPASSWORD = os.environ.get('SMTP_PASSWORD')
 
-# List of recipients
-app.config['MAIL_RECIPIENTS'] = ['timswei@gmail.com']
+smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com")
+smtp.starttls()
+smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
 
-mail = Mail(app)
+sender = "test@scholarscrape.com"
+receivers = ["walker.alt.38552@gmail.com"]
 
 @app.route('/submit-form', methods=['POST'])
 def submit_form():
@@ -34,14 +32,25 @@ def submit_form():
 
         # Create the email message
         email_subject = f"Contact Form Submission"
-        email_body = (f"Name: {name}\n"
-                      f"Email: {email}\n"
-                      f"Message:\n{message}")
+        email_body = (f"""From: test from scholarscrape <test@scholarscrape.com>
+To: caden <walker.alt.38552@gmail.com>
+Subject: {email_subject}
+
+    
+                      Name: f{name}
+                      Email: f{email}
+                      Message: f{message}
+                      """)
 
         # Send email to each recipient
-        for recipient in app.config['MAIL_RECIPIENTS']:
-            msg = Message(subject=email_subject, recipients=[recipient], body=email_body)
-            mail.send(msg)
+        while True:
+            try:
+                smtp.sendmail(sender, receivers, email_body)        
+                print("Successfully sent email")
+                break
+            except smtplib.SMTPException as e:
+                print("Error", e)
+                continue
 
         return jsonify({"status": "success", "message": "Submission received and emails sent!"}), 200
 
