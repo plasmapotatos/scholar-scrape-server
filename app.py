@@ -1,4 +1,5 @@
 import smtplib
+from email.mime.text import MIMEText
 from flask import Flask, request, jsonify
 from flask_mail import Mail, Message
 from flask_cors import CORS
@@ -12,14 +13,11 @@ SESSMTPUSERNAME = os.environ.get('SMTP_USERNAME')
 SESSMTPPASSWORD = os.environ.get('SMTP_PASSWORD')
 
 smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com")
-smtp.connect("email-smtp.us-east-1.amazonaws.com", '587')
 smtp.starttls()
 smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
 
 sender = "test@scholarscrape.com"
-receivers = ["walker.alt.38552@gmail.com"]
-
-# Secret key from Google reCAPTCHA (must be kept secure)
+recipients = ['timswei@gmail.com', 'walker.alt.38552@gmail.com']
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY')
 
 @app.route('/submit-form', methods=['POST'])
@@ -38,33 +36,29 @@ def submit_form():
 
         # Verify reCAPTCHA with Google
         recaptcha_verify_url = "https://www.google.com/recaptcha/api/siteverify"
-        print("recapthca key", RECAPTCHA_SECRET_KEY)
         recaptcha_payload = {
             'secret': RECAPTCHA_SECRET_KEY,
             'response': recaptcha_response
         }
         recaptcha_verification = requests.post(recaptcha_verify_url, data=recaptcha_payload)
         recaptcha_result = recaptcha_verification.json()
-        print(recaptcha_result)
 
         if not recaptcha_result.get('success'):
             return jsonify({"status": "error", "message": "reCAPTCHA verification failed."}), 400
 
         # Proceed to send the email
         email_subject = f"Contact Form Submission"
-        email_body = (f"""From: test from scholarscrape <test@scholarscrape.com>
-To: caden <walker.alt.38552@gmail.com>
-Subject: {email_subject}
 
-                      Name: {name}
-                      Email: {email}
-                      Message: {message}
-                      """)
-
-        # Send email to each recipient
+        msg = MIMEText(f"""                     
+                    Name: {name}
+                    Email: {email}
+                    Message: {message}""")
+        msg['Subject'] = email_subject
+        msg['From'] = sender
+        msg['To'] = ", ".join(recipients)
         while True:
             try:
-                smtp.sendmail(sender, receivers, email_body)
+                smtp.sendmail(sender, recipients, msg.as_string())
                 print("Successfully sent email")
                 break
             except smtplib.SMTPException as e:
