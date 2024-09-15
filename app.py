@@ -16,6 +16,29 @@ sender = "test@scholarscrape.com"
 recipients = ['timswei@gmail.com', 'walker.alt.38552@gmail.com']
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY')
 
+@app.route('/')
+def index():
+    return 'sigma'
+
+@app.route('/test')
+def test():
+    try:
+        smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com", port=587, timeout=10)
+        smtp.starttls()
+        smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
+        smtp.sendmail(sender, recipients, """From: Kate from Mailtrap <test@scholarscrape.com>
+To: Noah Doe <timswei@gmail.com>
+Subject: Check out my awesome email
+
+
+This is my first email sent with Python using Mailtrap's SMTP credentials. WDYT?
+""")        
+        print("Successfully sent email")
+        return jsonify({"status": "success", "message": "Submission received and emails sent!"}), 200
+    except smtplib.SMTPException as e:
+        print("Error", e)
+        return "chat we're cooked"
+
 @app.route('/submit-form', methods=['POST'])
 def submit_form():
     try:
@@ -55,7 +78,6 @@ def submit_form():
         while True:
             try:
                 smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com")
-                smtp.connect("email-smtp.us-east-1.amazonaws.com")
                 smtp.starttls()
                 smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
                 smtp.sendmail(sender, recipients, msg.as_string())
