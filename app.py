@@ -12,10 +12,6 @@ CORS(app)
 SESSMTPUSERNAME = os.environ.get('SMTP_USERNAME')
 SESSMTPPASSWORD = os.environ.get('SMTP_PASSWORD')
 
-smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com")
-smtp.starttls()
-smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
-
 sender = "test@scholarscrape.com"
 recipients = ['timswei@gmail.com', 'walker.alt.38552@gmail.com']
 RECAPTCHA_SECRET_KEY = os.environ.get('RECAPTCHA_SECRET_KEY')
@@ -58,6 +54,10 @@ def submit_form():
         msg['To'] = ", ".join(recipients)
         while True:
             try:
+                smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com")
+                smtp.connect("email-smtp.us-east-1.amazonaws.com")
+                smtp.starttls()
+                smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
                 smtp.sendmail(sender, recipients, msg.as_string())
                 print("Successfully sent email")
                 break
