@@ -47,7 +47,7 @@ def submit_form():
         email = request.form.get('email')
         message = request.form.get('message')
         recaptcha_response = request.form.get('g-recaptcha-response')
-        print(name, email, message, recaptcha_response)
+        print("Body:", name, email, message)
 
         # Validate the form data
         if not all([name, email, message, recaptcha_response]):
@@ -77,7 +77,7 @@ def submit_form():
         msg['To'] = ", ".join(recipients)
         while True:
             try:
-                smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com")
+                smtp = smtplib.SMTP("email-smtp.us-east-1.amazonaws.com", port=587, timeout=10)
                 smtp.starttls()
                 smtp.login(SESSMTPUSERNAME, SESSMTPPASSWORD)
                 smtp.sendmail(sender, recipients, msg.as_string())
